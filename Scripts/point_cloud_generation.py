@@ -68,7 +68,7 @@ def get_mesh(rgbd_image, im, transform=None):
     R = pcd.get_rotation_matrix_from_xyz((0, 0, -np.pi / 2), )
     pcd.rotate(R)
     pcd.transform(transform)
-    downpcd = pcd.voxel_down_sample(voxel_size=0.005)
+    downpcd = pcd.voxel_down_sample(voxel_size=0.01)
     radii = [0.005, 0.01, 0.02, 0.04]
     downpcd.estimate_normals(
         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
@@ -87,7 +87,7 @@ def create_depth_image(color_folder, depth_folder, image_name):
     return rgbd_image, im
 
 
-def create_scene_mesh(color_folder, depth_folder):
+def create_scene_mesh(color_folder, depth_folder, output_folder):
     images = os.listdir(color_folder)
     images.remove('background_0.png')
     cnt = 1
@@ -105,8 +105,8 @@ def create_scene_mesh(color_folder, depth_folder):
         phi += step
         cnt += 1
 
-    o3d.visualization.draw_geometries([mesh_combined], mesh_show_back_face=True)
-    o3d.io.write_triangle_mesh("fragment.obj", mesh_combined)
+    R = mesh_combined.get_rotation_matrix_from_xyz((0, 0, np.pi / 2))
+    mesh_combined.rotate(R, center=(0, 0, 0))
+    o3d.io.write_triangle_mesh(os.path.join(output_folder, "fragment.gltf"), mesh_combined)
 
-
-print(create_scene_mesh('images', 'output'))
+# print(create_scene_mesh('images', 'output', ""))

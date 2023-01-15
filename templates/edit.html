@@ -7,47 +7,53 @@
 <body>
 
 <h1>
-    AI SomeOne Else
+    AI SomeOne Else 🧍
 </h1>
 
 <h2>Scene : {{ scene.name }}</h2>
+<button> Start recording</button>
 
-<form action="/edit/{{ scene.name }}">
+<form action="/edit/{{ scene.name }}" method="post">
+    {% csrf_token %}
     <label>
         Orignial Speech text:
-        <textarea name="speech">{{ scene.speech }}</textarea>
+        <textarea name="speech" rows="5">{% if scene.speech is not None %}{{ scene.speech }}{% endif %}</textarea>
     </label>
+    <input type="submit">
 </form>
+
+<h2>Generated Background</h2>
+<img height="256" width="256" src="/static/images/{{ scene.name }}/background_0.png">
+<h2>Generated Images</h2>
+{% for image in images %}
+    <img  height="256" width="256"  src="/static/images/{{ scene.name }}/{{ image }}">
+{% endfor %}
 <br>
 
-<button> Start recording</button>
+<form action="/depth/{{ scene.name }}" method="post">
+    {% csrf_token %}
+    <button type="submit"> generate depth </button>
+</form>
+
+<h2>Generated Depth</h2>
+{% for image in images %}
+    <img  height="256" width="256"  src="/static/output/{{ scene.name }}/{{ image }}">
+{% endfor %}
+
+
+
+<form action="/model/{{ scene.name }}" method="post">
+    {% csrf_token %}
+    <button type="submit"> generate scene </button>
+</form>
+
+
+<form action="/viewer/{{ scene.name }}" >
+    <button type="submit"> generate scene </button>
+</form>
 
 </body>
 <script>
-    navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-        audio_handler(stream)
-    });
-    var audio_chunks = [];
 
-    audio_handler = function (stream) {
-        rec = new MediaRecorder(stream, {mimeType: 'audio/webm', codecs: "opus"});
-        rec.ondataavailable = function (e) {
-            audio_chunks.push(e.data);
-        }
-    }
-
-    //on rec.stop()
-    var blob = new Blob(audio_chunks, {'type': 'audio/wav; codecs=opus'});
-    console.log(blob);
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "http://localhost:8000/er/", true);
-    var data = new FormData();
-    data.append('data', blob, 'audio_blob');
-    xhttp.send(data);
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            console.log(this.responseText);
-        }
-    };
 </script>
 </html>
