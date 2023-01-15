@@ -11,7 +11,10 @@
 </h1>
 
 <h2>Scene : {{ scene.name }}</h2>
-<button> Start recording</button>
+<button type="button" id="record">Record</button>
+<button type="button" id="stopRecord" disabled>Stop</button>
+
+<audio id=recordedAudio></audio>
 
 <form action="/edit/{{ scene.name }}" method="post">
     {% csrf_token %}
@@ -26,34 +29,84 @@
 <img height="256" width="256" src="/static/images/{{ scene.name }}/background_0.png">
 <h2>Generated Images</h2>
 {% for image in images %}
-    <img  height="256" width="256"  src="/static/images/{{ scene.name }}/{{ image }}">
+    <img height="256" width="256" src="/static/images/{{ scene.name }}/{{ image }}">
 {% endfor %}
 <br>
 
 <form action="/depth/{{ scene.name }}" method="post">
     {% csrf_token %}
-    <button type="submit"> generate depth </button>
+    <button type="submit"> generate depth</button>
 </form>
 
 <h2>Generated Depth</h2>
 {% for image in images %}
-    <img  height="256" width="256"  src="/static/output/{{ scene.name }}/{{ image }}">
+    <img height="256" width="256" src="/static/output/{{ scene.name }}/{{ image }}">
 {% endfor %}
 
 
 
 <form action="/model/{{ scene.name }}" method="post">
     {% csrf_token %}
-    <button type="submit"> generate scene </button>
+    <button type="submit"> generate scene</button>
 </form>
 
 
-<form action="/viewer/{{ scene.name }}" >
-    <button type="submit"> generate scene </button>
+<form action="/viewer/{{ scene.name }}">
+    <button type="submit"> view scene</button>
 </form>
 
 </body>
 <script>
 
+    navigator.mediaDevices.getUserMedia({audio: true})
+        .then(stream => {
+            handlerFunction(stream)
+        })
+
+    recordedAudio = document.getElementById('recordedAudio')
+    record = document.getElementById('record')
+    stopRecord = document.getElementById('stopRecord')
+
+    function handlerFunction(stream) {
+        rec = new MediaRecorder(stream);
+        rec.ondataavailable = e => {
+            audioChunks.push(e.data);
+            if (rec.state == "inactive") {
+                let blob = new Blob(audioChunks, {type: 'audio/wav'});
+                console.log(blob)
+
+                recordedAudio.src = URL.createObjectURL(blob);
+                recordedAudio.controls = true;
+                recordedAudio.autoplay = true;
+                sendData(blob)
+            }
+        }
+    }
+
+    async function sendData(data) {
+        let fd = new FormData();
+        fd.append('audio', data, 'test.wav');
+        await fetch('/audio/{{ scene.name }}', {
+            method: 'POST',
+            body: fd
+        });
+
+        window.alert("Upload Success");
+        location.reload();
+    }
+
+    record.onclick = e => {
+        record.disabled = true;
+        record.style.backgroundColor = "blue"
+        stopRecord.disabled = false;
+        audioChunks = [];
+        rec.start();
+    }
+    stopRecord.onclick = e => {
+        record.disabled = false;
+        stop.disabled = true;
+        record.style.backgroundColor = "red"
+        rec.stop();
+    }
 </script>
 </html>

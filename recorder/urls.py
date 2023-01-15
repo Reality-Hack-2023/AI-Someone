@@ -11,4 +11,6 @@ urlpatterns = [
     path('model/<str:title>', views.generate_model, name='model'),
     path('viewer/<str:title>', views.view_model, name='viewer'),
     # path('details/', views.details, name='details')
+    path('audio/<str:title>', views.get_audio, name='audio'),
+
 ]
